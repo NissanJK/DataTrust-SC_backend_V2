@@ -1,437 +1,257 @@
-# DataTrust-SC Backend - A Trusted and Privacy-Preserving Data Distribution Framework for Smart Cities
+# DataTrust-SC Backend
 
-## 📋 Overview
+Express and MongoDB backend for DataTrust-SC, a trusted and privacy-preserving smart city data distribution framework. The API stores encrypted smart city datasets, evaluates access policies, records blockchain-style audit logs, supports CSV import/export, and exposes disaster monitoring endpoints for the frontend dashboard.
 
-Backend server for DataTrust-SC - a privacy-preserving smart city data sharing system with blockchain-inspired audit logging, attribute-based access control (ABAC), and real-time disaster monitoring.
+## Features
 
-## 🚀 Features
+- REST API for dataset upload, listing, import, and export.
+- AES-based encryption for stored dataset payloads.
+- Attribute-based access control using role and attribute policy checks.
+- Smart-contract-inspired policy execution helper.
+- Blockchain-style audit log records with chain index, previous hash, and entry hash.
+- Chain integrity verification endpoint.
+- Disaster monitoring endpoints for alerts, sector statistics, and thresholds.
+- MongoDB persistence with Mongoose models.
+- Configurable CORS for local, deployed, and Vercel preview frontends.
 
-- ✅ **Privacy-Preserving Data Storage** - AES-256 encryption
-- ✅ **Attribute-Based Access Control (ABAC)** - Fine-grained policy evaluation
-- ✅ **Blockchain-Inspired Audit Logging** - Immutable transaction records
-- ✅ **Real-Time Disaster Monitoring** - Smart threshold-based alerts
-- ✅ **Live Data Generation** - Simulated sensor data with realistic distributions
-- ✅ **CSV Import/Export** - Bulk data operations
-- ✅ **RESTful API** - Clean, documented endpoints
-- ✅ **MongoDB Integration** - Scalable NoSQL database
+## Tech Stack
 
-## 🛠️ Tech Stack
+- Node.js 16+
+- Express
+- MongoDB
+- Mongoose
+- Multer
+- csv-parser
+- crypto-js
+- dotenv
 
-- **Runtime:** Node.js (v16+)
-- **Framework:** Express.js
-- **Database:** MongoDB (with Mongoose ODM)
-- **Encryption:** Crypto (AES-256-CBC)
-- **File Upload:** Multer
-- **CSV Processing:** csv-parser
+## Repository
 
-## 📁 Project Structure
-
-```
-DataTrust-SC_backend/
-├── controllers/           # Request handlers
-│   ├── accessController.js       # Access request & policy evaluation
-│   ├── datasetController.js      # Data CRUD operations
-│   ├── disasterController.js     # Disaster monitoring logic
-│   └── systemController.js       # System management (reset)
-├── models/               # MongoDB schemas
-│   ├── Dataset.js               # Main dataset schema
-│   └── BlockchainLog.js         # Audit log schema
-├── routes/               # API route definitions
-│   ├── accessRoutes.js
-│   ├── datasetRoutes.js
-│   ├── disasterRoutes.js
-│   └── systemRoutes.js
-├── utils/                # Utility functions
-│   ├── crypto.js               # Encryption/decryption
-│   ├── policy.js               # ABAC policy evaluation
-│   └── disasterMonitoring.js   # Disaster detection logic
-├── uploads/              # Temporary CSV uploads
-├── .env                  # Environment variables (DO NOT COMMIT)
-├── server.js             # Main application entry point
-└── package.json          # Dependencies
-```
-
-## 📦 Installation
-
-### Prerequisites
-
-- Node.js v16 or higher
-- MongoDB (local or Atlas)
-- npm or yarn
-
-### Steps
-
-1. **Clone the repository**
 ```bash
-git clone https://github.com/NissanJK/DataTrust-SC_backend.git
+git clone https://github.com/NissanJK/DataTrust-SC_backend_V2.git
+cd DataTrust-SC_backend_V2
 ```
 
-2. **Install dependencies**
+## Prerequisites
+
+- Node.js 16 or newer
+- npm
+- MongoDB local instance or MongoDB Atlas cluster
+
+## Environment Variables
+
+Create a `.env` file in the backend project root:
+
+```env
+MONGO_URI=mongodb://localhost:27017/DataTrust-SC
+SECRET_KEY=replace-with-a-strong-secret-key-at-least-32-chars
+PORT=5000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+```
+
+Required variables:
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `MONGO_URI` | Yes | MongoDB connection string. |
+| `SECRET_KEY` | Yes | Encryption secret used by the crypto utilities. Keep it stable after data is encrypted. |
+| `PORT` | No | Server port. Defaults to `5000`. |
+| `NODE_ENV` | No | Runtime environment. |
+| `FRONTEND_URL` | No | Frontend origin allowed by CORS. |
+
+## Installation
+
 ```bash
 npm install
 ```
 
-3. **Create environment file**
+## Available Scripts
+
+Start the server:
+
 ```bash
-cp .env.example .env
+npm start
 ```
 
-4. **Configure environment variables**
+Start the server with nodemon:
 
-Edit `.env`:
-```env
-# MongoDB Connection
-MONGO_URI=mongodb://localhost:27017/DataTrust-SC
-# OR for MongoDB Atlas:
-# MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/DataTrust-SC
-
-# Encryption Secret (CHANGE THIS!)
-SECRET_KEY=your-super-secret-encryption-key-change-this
-
-# Server Configuration
-PORT=5000
-NODE_ENV=development
-
-# CORS (Frontend URL)
-FRONTEND_URL=http://localhost:3000
-```
-
-5. **Start the server**
 ```bash
-node server.js
+npm run dev
 ```
-Server runs at: `http://localhost:5000`
 
-## 🔌 API Endpoints
+The API runs at `http://localhost:5000` by default.
 
-### Dataset Management
+## Project Structure
 
-#### Upload Data
+```text
+backend/
+├── controllers/
+│   ├── accessController.js
+│   ├── datasetController.js
+│   ├── disasterController.js
+│   └── systemController.js
+├── models/
+│   ├── BlockchainLog.js
+│   └── Dataset.js
+├── routes/
+│   ├── accessRoutes.js
+│   ├── datasetRoutes.js
+│   ├── disasterRoutes.js
+│   └── systemRoutes.js
+├── utils/
+│   ├── chainVerifier.js
+│   ├── crypto.js
+│   ├── disasterMonitoring.js
+│   └── SmartContract.js
+├── server.js
+├── package.json
+└── readme.md
+```
+
+## API Reference
+
+### Health
+
+```http
+GET /health
+```
+
+Returns server status and database connectivity.
+
+### Dataset
+
+```http
+GET /api/dataset
+```
+
+Returns all dataset metadata without encrypted payloads.
+
 ```http
 POST /api/dataset/upload
 Content-Type: application/json
+```
 
+Required JSON fields:
+
+```json
 {
   "ownerRole": "CityAuthority",
   "Sector": "sector1",
   "Data_Provider_Type": "IoT Sensor",
   "Data_Category": "Environmental",
-  "Temperature_C": 25.5,
-  "Air_Quality_Index": 150,
-  "Traffic_Density": null,
-  "Energy_Consumption_kWh": null,
   "policy": "role:CityAuthority OR role:Researcher"
 }
-
-Response: { "message": "Upload successful", "hash": "abc123..." }
 ```
 
-#### Import CSV
+Optional metric fields include `Temperature_C`, `Air_Quality_Index`, `Traffic_Density`, `Energy_Consumption_kWh`, `Blockchain_Tx_Cost_Gas`, and `Authorization_Latency_sec`.
+
 ```http
 POST /api/dataset/import
 Content-Type: multipart/form-data
-
-file: dataset.csv
-
-Response: {
-  "message": "CSV import completed",
-  "imported": 500,
-  "errors": 0,
-  "total": 500
-}
 ```
 
-#### Get All Datasets
-```http
-GET /api/dataset
+Upload a CSV file using the form field name `file`.
 
-Response: [
-  {
-    "_id": "...",
-    "metadata": { ... },
-    "hash": "...",
-    "policy": "...",
-    "createdAt": "..."
-  }
-]
-```
-
-#### Export CSV
 ```http
 GET /api/dataset/export
-
-Response: CSV file download
 ```
+
+Downloads the stored dataset as CSV.
 
 ### Access Control
 
-#### Request Access
 ```http
 POST /api/access/request
 Content-Type: application/json
+```
 
+Request body:
+
+```json
 {
   "category": "Environmental",
   "role": "Researcher",
   "attribute": "sensitivity=public"
 }
-
-Response: {
-  "category": "Environmental",
-  "count": 10,
-  "records": [
-    {
-      "hash": "...",
-      "data": "{ decrypted JSON }"
-    }
-  ]
-}
 ```
 
-#### Get Audit Logs
+Returns decrypted records when the policy grants access.
+
 ```http
 GET /api/access/logs
-
-Response: [
-  {
-    "type": "ACCESS_REQUEST",
-    "hash": "...",
-    "role": "Researcher",
-    "granted": true,
-    "timestamp": "..."
-  }
-]
 ```
+
+Returns blockchain-style audit log entries sorted by newest first.
 
 ### Disaster Monitoring
 
-#### Get All Alerts
 ```http
 GET /api/disaster/alerts
-
-Response: {
-  "success": true,
-  "totalAlerts": 12,
-  "criticalAlerts": 3,
-  "alerts": [
-    {
-      "type": "HEAT_WAVE",
-      "severity": "CRITICAL",
-      "sector": "sector1",
-      "message": "...",
-      "recommendation": "...",
-      "actions": ["..."]
-    }
-  ]
-}
-```
-
-#### Get Sector Alerts
-```http
 GET /api/disaster/alerts/:sector
-
-Response: { sector-specific alerts }
-```
-
-#### Get Sector Statistics
-```http
 GET /api/disaster/sectors/stats
-
-Response: {
-  "sectors": {
-    "sector1": {
-      "status": "NORMAL",
-      "latest": { ... },
-      "averages": { ... }
-    }
-  }
-}
-```
-
-#### Get Thresholds
-```http
 GET /api/disaster/thresholds
-
-Response: { temperature: {...}, aqi: {...}, ... }
 ```
 
-### System Management
+These endpoints power the disaster warning center and sector analytics in the frontend.
 
-#### Reset System
+### System
+
 ```http
 POST /api/system/reset
-
-Response: {
-  "success": true,
-  "deleted": {
-    "datasets": 500,
-    "logs": 1000
-  }
-}
 ```
 
-#### Health Check
+Deletes all datasets and blockchain logs. Use only for local demos or controlled resets.
+
 ```http
-GET /health
-
-Response: {
-  "status": "OK",
-  "timestamp": "...",
-  "services": {
-    "database": "connected",
-    "disasterMonitoring": "active"
-  }
-}
+GET /api/system/verify-chain
 ```
 
-## 🔐 Security Features
+Verifies audit log chain integrity and returns `200` when valid or `409` when tampering or a broken chain is detected.
 
-### Data Encryption
-- **Algorithm:** AES-256-CBC
-- **Scope:** All sensitive dataset payloads
-- **Key Management:** Environment variable (SECRET_KEY)
+## Data Model Summary
 
-### Access Control (ABAC)
-- **Policy Format:** `role:X AND/OR attribute:Y`
-- **Evaluation:** Dynamic policy parsing and validation
-- **Audit:** All access attempts logged
+Dataset records contain:
 
-### Example Policies
-```javascript
-// Public access
-"role:Citizen OR role:CityAuthority OR role:Researcher AND attribute:sensitivity=public"
+- `metadata`: smart city values and generated blockchain metrics.
+- `encryptedPayload`: encrypted JSON payload.
+- `hash`: unique SHA-256 record hash.
+- `policy`: access policy string.
+- `ownerRole`: owner role used during policy checks.
+- `createdAt`: creation timestamp.
 
-// Private access
-"role:CityAuthority OR role:Researcher AND attribute:sensitivity=private"
+Blockchain log records contain:
 
-// Authority only
-"role:CityAuthority"
-```
+- `type`: `DATA_REGISTER` or `ACCESS_REQUEST`.
+- `hash`: related dataset hash.
+- `role`, `attribute`, `policy`, and `granted` fields for access requests.
+- `contractId`: generated policy contract identifier.
+- `chainIndex`, `previousHash`, and `entryHash` for chain verification.
+- `timestamp`: event time.
 
-## 🚨 Disaster Monitoring
+## Troubleshooting
 
-### Thresholds
+### Missing environment variables
 
-| Metric | Caution | Warning | Critical |
-|--------|---------|---------|----------|
-| Temperature (°C) | 32-34 | 35-37 | ≥38 |
-| AQI | 150-199 | 200-249 | ≥250 |
-| Traffic Density | 50-69 | 70-84 | ≥85 |
-| Energy (kWh) | 350-449 | 450-499 | ≥500 |
+The server exits when `MONGO_URI` or `SECRET_KEY` is missing. Add both values to `.env` and restart.
 
-### Alert Types
-- Heat Wave / Cold Wave
-- Air Pollution (Hazardous, Very Unhealthy, Unhealthy)
-- Traffic Emergency
-- Power Grid Failure
-- Multi-factor disasters (e.g., Heat + Power)
+### MongoDB connection failure
 
-## 📊 Data Models
+- Confirm MongoDB is running locally or the Atlas URI is valid.
+- Confirm Atlas network access allows your current IP address.
+- Confirm `MONGO_URI` includes the database name.
 
-### Dataset Schema
-```javascript
-{
-  metadata: {
-    Sector: String,
-    Data_Provider_Type: String,
-    Data_Category: String,
-    Temperature_C: Number,
-    Air_Quality_Index: Number,
-    Traffic_Density: Number,
-    Energy_Consumption_kWh: Number,
-    Blockchain_Tx_Cost_Gas: Number,
-    Authorization_Latency_sec: Number
-  },
-  encryptedPayload: String,
-  hash: String (unique),
-  policy: String,
-  ownerRole: String,
-  createdAt: Date
-}
-```
+### CORS error from the frontend
 
-### BlockchainLog Schema
-```javascript
-{
-  type: String, // DATA_REGISTER, ACCESS_REQUEST
-  hash: String,
-  owner: String,
-  role: String,
-  attribute: String,
-  policy: String,
-  granted: Boolean,
-  timestamp: Date
-}
-```
+- Set `FRONTEND_URL` to the frontend origin, for example `http://localhost:3000`.
+- Restart the backend after changing `.env`.
+- Vercel preview URLs ending in `.vercel.app` are allowed automatically.
 
-## 🐛 Troubleshooting
+### Port already in use
 
-### MongoDB Connection Error
-```
-Error: connect ECONNREFUSED 127.0.0.1:27017
-```
-**Solution:**
-- Check MongoDB is running: `mongod` or `sudo systemctl start mongod`
-- Verify MONGO_URI in `.env`
-- For Atlas: Check network access whitelist
+Change `PORT` in `.env` or stop the process currently using port `5000`.
 
-### Port Already in Use
-```
-Error: listen EADDRINUSE: address already in use :::5000
-```
-**Solution:**
-```bash
-# Find and kill process
-lsof -i :5000
-kill -9 <PID>
+## Author
 
-# Or change PORT in .env
-PORT=5001
-```
-
-### Encryption/Decryption Error
-```
-Error: Invalid initialization vector
-```
-**Solution:**
-- Ensure SECRET_KEY is consistent
-- Don't change SECRET_KEY after encrypting data
-- SECRET_KEY must be at least 32 characters
-
-### CORS Error
-```
-Access to XMLHttpRequest blocked by CORS policy
-```
-**Solution:**
-- Update FRONTEND_URL in `.env`
-- Verify CORS configuration in `server.js`
-
-## 📝 Environment Variables Reference
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `MONGO_URI` | Yes | - | MongoDB connection string |
-| `SECRET_KEY` | Yes | - | Encryption key (32+ chars) |
-| `PORT` | No | 5000 | Server port |
-| `NODE_ENV` | No | development | Environment mode |
-| `FRONTEND_URL` | No | http://localhost:3000 | CORS allowed origin |
-
-## 📚 Dependencies
-
-```json
-{
-  "express": "^4.18.2",
-  "mongoose": "^7.0.0",
-  "cors": "^2.8.5",
-  "dotenv": "^16.0.3",
-  "multer": "^1.4.5-lts.1",
-  "csv-parser": "^3.0.0"
-}
-```
-
-## 👨‍💻 Author
-
-**Your Name**
 - GitHub: [@NissanJK](https://github.com/NissanJK)
 - Email: jawadul.karim78@gmail.com
-
