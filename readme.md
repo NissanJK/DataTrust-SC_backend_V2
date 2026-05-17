@@ -43,12 +43,14 @@ cd DataTrust-SC_backend_V2
 Create a `.env` file in the backend project root:
 
 ```env
-MONGO_URI=mongodb://localhost:27017/DataTrust-SC
-SECRET_KEY=replace-with-a-strong-secret-key-at-least-32-chars
-PORT=5000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
+MONGO_URI=your-mongodb-connection-string
+SECRET_KEY=your-strong-secret-key
+PORT=your-server-port
+NODE_ENV=your-runtime-environment
+FRONTEND_URL=your-frontend-origin
 ```
+
+Do not commit real connection strings, deployed service URLs, encryption secrets, API keys, tokens, or private infrastructure details.
 
 Required variables:
 
@@ -56,7 +58,7 @@ Required variables:
 | --- | --- | --- |
 | `MONGO_URI` | Yes | MongoDB connection string. |
 | `SECRET_KEY` | Yes | Encryption secret used by the crypto utilities. Keep it stable after data is encrypted. |
-| `PORT` | No | Server port. Defaults to `5000`. |
+| `PORT` | No | Server port. |
 | `NODE_ENV` | No | Runtime environment. |
 | `FRONTEND_URL` | No | Frontend origin allowed by CORS. |
 
@@ -80,7 +82,7 @@ Start the server with nodemon:
 npm run dev
 ```
 
-The API runs at `http://localhost:5000` by default.
+The API runs on the configured `PORT`.
 
 ## Project Structure
 
@@ -109,105 +111,9 @@ backend/
 └── readme.md
 ```
 
-## API Reference
+## API Overview
 
-### Health
-
-```http
-GET /health
-```
-
-Returns server status and database connectivity.
-
-### Dataset
-
-```http
-GET /api/dataset
-```
-
-Returns all dataset metadata without encrypted payloads.
-
-```http
-POST /api/dataset/upload
-Content-Type: application/json
-```
-
-Required JSON fields:
-
-```json
-{
-  "ownerRole": "CityAuthority",
-  "Sector": "sector1",
-  "Data_Provider_Type": "IoT Sensor",
-  "Data_Category": "Environmental",
-  "policy": "role:CityAuthority OR role:Researcher"
-}
-```
-
-Optional metric fields include `Temperature_C`, `Air_Quality_Index`, `Traffic_Density`, `Energy_Consumption_kWh`, `Blockchain_Tx_Cost_Gas`, and `Authorization_Latency_sec`.
-
-```http
-POST /api/dataset/import
-Content-Type: multipart/form-data
-```
-
-Upload a CSV file using the form field name `file`.
-
-```http
-GET /api/dataset/export
-```
-
-Downloads the stored dataset as CSV.
-
-### Access Control
-
-```http
-POST /api/access/request
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "category": "Environmental",
-  "role": "Researcher",
-  "attribute": "sensitivity=public"
-}
-```
-
-Returns decrypted records when the policy grants access.
-
-```http
-GET /api/access/logs
-```
-
-Returns blockchain-style audit log entries sorted by newest first.
-
-### Disaster Monitoring
-
-```http
-GET /api/disaster/alerts
-GET /api/disaster/alerts/:sector
-GET /api/disaster/sectors/stats
-GET /api/disaster/thresholds
-```
-
-These endpoints power the disaster warning center and sector analytics in the frontend.
-
-### System
-
-```http
-POST /api/system/reset
-```
-
-Deletes all datasets and blockchain logs. Use only for local demos or controlled resets.
-
-```http
-GET /api/system/verify-chain
-```
-
-Verifies audit log chain integrity and returns `200` when valid or `409` when tampering or a broken chain is detected.
+The backend exposes REST endpoints for datasets, access control, audit logs, disaster monitoring, system reset, chain verification, and health checks. Keep route-level documentation, request examples, deployment URLs, and private operational details in internal documentation rather than this public README.
 
 ## Data Model Summary
 
@@ -243,13 +149,13 @@ The server exits when `MONGO_URI` or `SECRET_KEY` is missing. Add both values to
 
 ### CORS error from the frontend
 
-- Set `FRONTEND_URL` to the frontend origin, for example `http://localhost:3000`.
+- Set `FRONTEND_URL` to the approved frontend origin.
 - Restart the backend after changing `.env`.
-- Vercel preview URLs ending in `.vercel.app` are allowed automatically.
+- Confirm preview deployment rules are appropriate for your production security requirements.
 
 ### Port already in use
 
-Change `PORT` in `.env` or stop the process currently using port `5000`.
+Change `PORT` in `.env` or stop the process currently using the configured port.
 
 ## Author
 
